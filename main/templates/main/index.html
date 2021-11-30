@@ -17,6 +17,51 @@
   <link rel="stylesheet" href="https://unpkg.com/swiper@7/swiper-bundle.min.css" />
 
 
+  <!-- token and cookie  -->
+  <script>
+    let user = '{{request.user}}'
+    function getToken(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getToken('csrftoken');
+
+    function getCookie(name){
+      let cookieArr = document.cookie.split(";")
+
+      for(let i=0; i < cookieArr.length; i++){
+          let cookiePair = cookieArr[i].split("=")
+
+          if(name == cookiePair[0].trim()){
+              return decodeURIComponent(cookiePair[1]);
+          }
+      }
+
+      return null
+    }
+
+    let cart = JSON.parse(getCookie('cart'))
+    if(cart == undefined){
+        cart = {}
+        console.log('Cart was created!')
+        document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path/"
+    }
+
+    console.log('Cart:', cart)
+
+  </script>
+
 </head>
 <body>
   
@@ -33,6 +78,7 @@
       <a href="#categories">categories</a>
       <a href="#review">review</a>
       <a href="#blogs">blogs</a>
+      <a href="#order">order</a>
     </nav>
 
     <div class="icons">
@@ -44,41 +90,37 @@
 
     </div>
 
-    <form action="" class="search-form">
-      <input type="search" id="search-box" placeholder="search here...">
+    <form method="get", action="{% url 'search-results' %}" class="search-form">
+      <input type="search" id="search-box" name="q" placeholder="search here...">
       <label for="search-box" class="fas fa-search"></label>
     </form>
 
     <div class="shopping-cart">
-      <div class="box">
-        <i class="fas fa-trash"></i>
-        <img src="{% static 'images/cart-img-1.png' %}" alt="">
-        <div class="content">
-          <h3>watermelon</h3>
-          <span class="price">$4.99/-</span>
-          <span class="quantity">qty : 1</span>
+      <table class="table">
+        <tr>
+          <th><h5>Items:<span>{{order.get_cart_items}}</span></h5></th>
+          <th><h5>Total:<span>${{order.get_cart_total}}</span></h5></th>
+        </tr>
+      </table>
+      {% for item in items %}
+        <div class="box">
+          <div  data-action="delete" class="chg-quantity update-cart">
+            <i class="fas fa-trash"></i>
+          </div>
+          <img src="{{item.product.imageURL}}" alt="">
+          <div class="content">
+            <h3>{{item.product.name}}</h3>
+            <span class="price">${{item.product.price|floatformat:2}}</span>
+            <span class="quantity">qty : {{item.quantity}}</span>
+            <div class="quantity">
+              <img data-product={{item.product.id}} data-action="add" class="chg-quantity update-cart" src="{% static  'images/arrow-up.png' %}">
+      
+              <img data-product={{item.product.id}} data-action="remove" class="chg-quantity update-cart" src="{% static  'images/arrow-down.png' %}">
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="box">
-        <i class="fas fa-trash"></i>
-        <img src="{% static 'images/cart-img-2.png' %}" alt="">
-        <div class="content">
-          <h3>onion</h3>
-          <span class="price">$4.74/-</span>
-          <span class="quantity">qty : 7</span>
-        </div>
-      </div>
-      <div class="box">
-        <i class="fas fa-trash"></i>
-        <img src="{% static 'images/cart-img-3.png' %}" alt="">
-        <div class="content">
-          <h3>chicken</h3>
-          <span class="price">$31.00/-</span>
-          <span class="quantity">qty : 1</span>
-        </div>
-      </div>
-      <div class="total">total : $40.73/-</div>
-      <a href="#" class="btn">checkout</a>
+      {% endfor %}
+      <a href="#order" class="btn">checkout</a>
     </div>
 
     <form action="" class="login-form">
@@ -100,7 +142,7 @@
 
     <div class="content">
       <h3>fresh and <span>organic</span> products for you</h3>
-      <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Unde saepe quasi maiores distinctio ipsa incidunt odio illum libero reprehenderit ex.</p>
+      <p>Organic food is grown without the use of synthetic chemicals, such as human-made pesticides and fertilizers, and does not contain genetically modified organisms (GMOs). Organic foods include fresh produce, meats, and dairy products as well as processed foods such as crackers, drinks, and frozen meals.</p>
       <a href="#products" class="btn">shop now</a>
     </div>
 
@@ -119,7 +161,7 @@
       <div class="swiper-slide box">
         <img src="{% static 'images/feature-img-1.png' %}" alt="">
         <h3>fresh and organic</h3>
-        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Deserunt, nostrum.</p>
+        <p>Organic & Natural Groceries, Fresh Local Produce, Locally Sourced Fresh Meats, Scratch Deli Salads, Clean Supplements & Body Care, Eco-Friendly Household Items, Plant-Based | Gluten-Free,Dairy-Free | Nut-Free, Vegan & Vegetarian Essentials</p>
         <a href="#" class="btn">read now</a>
       </div>
 
@@ -154,61 +196,14 @@
 
       <div class="swiper-wrapper">
 
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-1.png' %}" alt="">
-          <h3>fresh orange</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
+        {% for product in products %}
+          <div class="swiper-slide box">
+            <img src="{{product.imageURL}}" alt="">
+            <h3>{{ product.name }}</h3>
+            <div class="price">${{product.price|floatformat:2}}</div>
+            <button data-product={{product.id}} data-action="add" class="btn btn-outline-secondary add-btn update-cart">add to cart</button>
           </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-2.png' %}" alt="">
-          <h3>fresh onion</h3>
-          <div class="price">$1.50/- - $5.50/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-3.png' %}" alt="">
-          <h3>fresh meat</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-4.png' %}" alt="">
-          <h3>fresh cabbage</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
+        {% endfor %}
 
       </div>
 
@@ -219,58 +214,9 @@
       <div class="swiper-wrapper">
 
         <div class="swiper-slide box">
-          <img src="{% static 'images/product-5.png' %}" alt="">
-          <h3>fresh potato</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-6.png' %}" alt="">
-          <h3>fresh avocado</h3>
-          <div class="price">$1.50/- - $5.50/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-7.png' %}" alt="">
-          <h3>fresh carrot</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-          <a href="#" class="btn">add to cart</a>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/product-8.png' %}" alt="">
-          <h3>green lemon</h3>
-          <div class="price">$4.99/- - $10.99/-</div>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
+          <img src="{{product.imageURL}}" alt="">
+          <h3>{{ product.name }}</h3>
+          <div class="price">${{product.price|floatformat:2}}</div>
           <a href="#" class="btn">add to cart</a>
         </div>
 
@@ -291,33 +237,13 @@
 
     <div class="box-container">
 
-      <div class="box">
-        <img src="{% static 'images/cat-1.png' %}" alt="">
-        <h3>vegitables</h3>
-        <p>up 45% off</p>
-        <a href="#" class="btn">shop now</a>
-      </div>
-
-      <div class="box">
-        <img src="{% static 'images/cat-2.png' %}" alt="">
-        <h3>fresh fruits</h3>
-        <p>up 45% off</p>
-        <a href="#" class="btn">shop now</a>
-      </div>
-
-      <div class="box">
-        <img src="{% static 'images/cat-3.png' %}" alt="">
-        <h3>dairy products</h3>
-        <p>up 45% off</p>
-        <a href="#" class="btn">shop now</a>
-      </div>
-
-      <div class="box">
-        <img src="{% static 'images/cat-4.png' %}" alt="">
-        <h3>fresh meat</h3>
-        <p>up 45% off</p>
-        <a href="#" class="btn">shop now</a>
-      </div>
+      {% for category in categories %}
+        <div class="box">
+          <img src="{{category.imageURL}}" alt="">
+          <h3>{{category.name}}</h3>
+          <a href="#" class="btn">shop now</a>
+        </div>
+      {% endfor %}
 
     </div>
 
@@ -335,58 +261,21 @@
     <div class="swiper review-slider">
 
       <div class="swiper-wrapper">
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/pic-1.png' %}" alt="">
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur adipisci blanditiis laudantium molestias, id consequatur delectus ducimus dicta? Pariatur, quidem?</p>
-          <h3>john deo</h3>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
+        
+        {% for review in reviews %}
+          <div class="swiper-slide box">
+            <img src="{{review.customer.imageURL}}" alt="">
+            <p>{{review.text}}</p>
+            <h3>{{review.customer.name}}</h3>
+            <div class="stars">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star-half-alt"></i>
+            </div>
           </div>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/pic-2.png' %}" alt="">
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur adipisci blanditiis laudantium molestias, id consequatur delectus ducimus dicta? Pariatur, quidem?</p>
-          <h3>john deo</h3>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/pic-3.png' %}" alt="">
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur adipisci blanditiis laudantium molestias, id consequatur delectus ducimus dicta? Pariatur, quidem?</p>
-          <h3>john deo</h3>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-        </div>
-
-        <div class="swiper-slide box">
-          <img src="{% static 'images/pic-4.png' %}" alt="">
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur adipisci blanditiis laudantium molestias, id consequatur delectus ducimus dicta? Pariatur, quidem?</p>
-          <h3>john deo</h3>
-          <div class="stars">
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-star-half-alt"></i>
-          </div>
-        </div>
+        {% endfor %}
 
       </div>
 
@@ -405,50 +294,58 @@
 
     <div class="box-container">
 
-      <div class="box">
-        <img src="{% static 'images/blog-1.jpg' %}" alt="">
-        <div class="content">
-          <div class="icons">
-            <a href="#"><i class="fas fa-user"></i>by user</a>
-            <a href="#"><i class="fas fa-calendar"></i>1st May, 2021</a>
+      {% for blog in blogs %}
+        <div class="box">
+          <img src="{{blog.imageURL}}" alt="">
+          <div class="content">
+            <div class="icons">
+              <a href="#"><i class="fas fa-user"></i>{{blog.customer.name}}</a>
+              <a href="#"><i class="fas fa-calendar"></i>{{blog.date}}</a>
+            </div>
+            <h3>{{blog.title}}</h3>
+            <p>{{blog.text}}</p>
+            <a href="#" class="btn">read more</a>
           </div>
-          <h3>fresh and organic vegitables and fruits</h3>
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos, itaque.</p>
-          <a href="#" class="btn">read more</a>
         </div>
-      </div>
-
-      <div class="box">
-        <img src="{% static 'images/blog-2.jpg' %}" alt="">
-        <div class="content">
-          <div class="icons">
-            <a href="#"><i class="fas fa-user"></i>by user</a>
-            <a href="#"><i class="fas fa-calendar"></i>1st May, 2021</a>
-          </div>
-          <h3>fresh and organic vegitables and fruits</h3>
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos, itaque.</p>
-          <a href="#" class="btn">read more</a>
-        </div>
-      </div>
-
-      <div class="box">
-        <img src="{% static 'images/blog-3.jpg' %}" alt="">
-        <div class="content">
-          <div class="icons">
-            <a href="#"><i class="fas fa-user"></i>by user</a>
-            <a href="#"><i class="fas fa-calendar"></i>1st May, 2021</a>
-          </div>
-          <h3>fresh and organic vegitables and fruits</h3>
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos, itaque.</p>
-          <a href="#" class="btn">read more</a>
-        </div>
-      </div>
+      {% endfor %}
 
     </div>
 
   </section>
 
   <!-- blogs sections ends  -->
+
+
+  <!-- order section starts  -->
+
+  <section id="order" class="order">
+
+    <h1 class="heading"><span>order</span> now</h1>
+
+    <div class="row">
+
+      <div class="image">
+        <img src="{% static 'images/order-img.jpg' %}" alt="">
+      </div>
+
+      <form action="">
+
+        <div class="inputBox">
+          <input type="number" name="" id="" placeholder="number">
+          <input type="number" name="" id="" placeholder="zipcode">
+        </div>
+
+        <textarea placeholder="address" name=" " id="" cols="30" rows="10"></textarea>
+
+        <input type="submit" value="order now" class="btn">
+
+      </form>
+
+    </div>
+
+  </section>
+
+  <!-- order section ends  -->
 
 
   <!-- footer section starts  -->
@@ -472,18 +369,19 @@
         <h3>contact info</h3>
         <a href="#" class="links"><i class="fas fa-phone"></i>+996 555 555 222</a>
         <a href="#" class="links"><i class="fas fa-phone"></i>+996 500 505 505</a>
-        <a href="#" class="links"><i class="fas fa-envelope"></i>makers@proton.com</a>
+        <a href="#" class="links"><i class="fas fa-envelope"></i>makers@protonmail.com</a>
         <a href="#" class="links"><i class="fas fa-map-marker-alt"></i>Bishkek, Tybyshalieva 29</a>
       </div>
 
       <div class="box">
         <h3>quick links</h3>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i>home</a>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i>features</a>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i>products</a>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i> categories</a>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i>review</a>
-        <a href="#" class="links"><i class="fas fa-arrow-right"></i>blogs</a>
+        <a href="#home" class="links"><i class="fas fa-arrow-right"></i>home</a>
+        <a href="#features" class="links"><i class="fas fa-arrow-right"></i>features</a>
+        <a href="#products" class="links"><i class="fas fa-arrow-right"></i>products</a>
+        <a href="#categories" class="links"><i class="fas fa-arrow-right"></i> categories</a>
+        <a href="#review" class="links"><i class="fas fa-arrow-right"></i>review</a>
+        <a href="#blogs" class="links"><i class="fas fa-arrow-right"></i>blogs</a>
+        <a href="#order" class="links"><i class="fas fa-arrow-right"></i>order</a>
       </div>
 
       <div class="box">
